@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+ 
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    cursor: none;
+}
+ 
+body {
+    background: #0f172a;
+    color: #fff;
+}
+ 
+/* ─── CUSTOM CURSOR ─── */
+:root {
+    --cyan: #00e5ff;
+}
+ 
+#cursor-dot {
+    width: 12px;
+    height: 12px;
+    background: var(--cyan);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s ease;
+    mix-blend-mode: screen;
+}
+ 
+#cursor-ring {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid rgba(0,229,255,0.5);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.25s ease, width 0.2s, height 0.2s;
+}
+ 
+/* Hover state on interactive elements */
+body.cursor-hover #cursor-dot {
+    transform: translate(-50%, -50%) scale(1.8);
+}
+ 
+body.cursor-hover #cursor-ring {
+    width: 52px;
+    height: 52px;
+}
+ 
+/* ─── GRID BG LINES (same as image) ─── */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+}
+ 
+/* ─── FEATURES SECTION ─── */
+.features {
+    position: relative;
+    z-index: 1;
+    padding: 80px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+ 
+.section-label {
+    color: #38bdf8;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+ 
+.section-title {
+    font-size: 2.8rem;
+    margin-bottom: 50px;
+}
+ 
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    max-width: 1000px;
+    justify-content: center;
+}
+ 
+.feature-card {
+    background: rgba(0,229,255,0.12);
+    padding: 30px;
+    border-radius: 18px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+    transition: 0.3s ease;
+}
+ 
+.feature-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow:
+        0 0 25px rgba(56, 189, 248, 0.6),
+        0 0 50px rgba(56, 189, 248, 0.3);
+}
+ 
+.feature-icon {
+    font-size: 2.2rem;
+    margin-bottom: 15px;
+}
+ 
+.feature-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+ 
+.feature-desc {
+    font-size: 0.95rem;
+    color: #cbd5f5;
+}
+ 
+@media(max-width: 900px) {
+    .features-grid { grid-template-columns: repeat(2, 1fr); }
+}
+ 
+@media(max-width: 600px) {
+    .features-grid { grid-template-columns: 1fr; }
+    .section-title { font-size: 2rem; }
+}
+    </style>
+</head>
+<body>
+ 
+<!-- Custom cursor elements -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+ 
+<section class="features" id="features">
+  <div class="section-label">Capabilities</div>
+  <h2 class="section-title">Built for clinical precision</h2>
+ 
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🫁</div>
+      <div class="feature-title">Multi-Region Detection</div>
+      <p class="feature-desc">Simultaneous analysis of all lung zones, pleural spaces, mediastinum, and bony structures in a single scan.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Instant Severity Grading</div>
+      <p class="feature-desc">Automated severity classification from Normal to Critical with confidence scores for each identified finding.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧬</div>
+      <div class="feature-title">Differential Diagnosis</div>
+      <p class="feature-desc">AI-generated ranked differential diagnoses with clinical reasoning, aligned with radiological best practices.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-title">Structured Reports</div>
+      <p class="feature-desc">Downloadable diagnostic reports formatted for clinical handoff, complete with findings, impressions, and recommendations.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <div class="feature-title">Region Highlighting</div>
+      <p class="feature-desc">Visual annotation of abnormal regions with bounding overlays so clinicians can instantly locate areas of concern.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛡️</div>
+      <div class="feature-title">Safety First</div>
+      <p class="feature-desc">Always recommends specialist review. Designed as a decision-support tool, never as a replacement for radiologists.</p>
+    </div>
+  </div>
+</section>
+ 
+<script>
+  const dot  = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+ 
+  let mouseX = 0, mouseY = 0;
+  let ringX  = 0, ringY  = 0;
+  const lag  = 0.12; // ring follow speed (0 = instant, 1 = never)
+ 
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    dot.style.left = mouseX + 'px';
+    dot.style.top  = mouseY + 'px';
+  });
+ 
+  // Smooth ring with requestAnimationFrame
+  function animateRing() {
+    ringX += (mouseX - ringX) * (1 - lag);
+    ringY += (mouseY - ringY) * (1 - lag);
+    ring.style.left = ringX + 'px';
+    ring.style.top  = ringY + 'px';
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+ 
+  // Hover state on cards & buttons
+  const hoverTargets = document.querySelectorAll('.feature-card, a, button');
+  hoverTargets.forEach(el => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+  });
+</script>
+</body>
+</html>

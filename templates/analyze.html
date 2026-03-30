@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analyze X-Ray — RadiantAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020a0f;
+    --surface: #061218;
+    --surface2: #0a1f2a;
+    --cyan: #00e5ff;
+    --teal: #00ffd5;
+    --amber: #ffb700;
+    --text: #e8f4f8;
+    --text-muted: #7a9aaa;
+    --border: rgba(0,229,255,0.12);
+    --danger: #ff4d6d;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 60px;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    background: rgba(2,10,15,0.8);
+  }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--cyan); text-decoration: none; }
+  .logo span { color: var(--text); }
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--text-muted); text-decoration: none; font-size: 0.88rem;
+    transition: color 0.2s;
+  }
+  .back-btn:hover { color: var(--cyan); }
+
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 40px 100px;
+  }
+
+  .page-header {
+    margin-bottom: 48px;
+    animation: fadeUp 0.8s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,229,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-size: 0.75rem; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--cyan); margin-bottom: 20px;
+  }
+  .badge-dot { width: 6px; height: 6px; background: var(--cyan); border-radius: 50%; animation: blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+  h1 {
+    font-family: 'Clash Display', sans-serif;
+    font-size: 2.8rem; font-weight: 700;
+    letter-spacing: -0.03em; line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .page-sub { color: var(--text-muted); font-size: 1rem; font-weight: 300; }
+
+  /* UPLOAD ZONE */
+  .upload-zone {
+    border: 2px dashed rgba(0,229,255,0.2);
+    border-radius: 16px;
+    background: var(--surface);
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.8s ease 0.15s both;
+    margin-bottom: 32px;
+  }
+  .upload-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(0,229,255,0.04) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--cyan);
+    background: rgba(0,229,255,0.04);
+    box-shadow: 0 0 40px rgba(0,229,255,0.08);
+  }
+  .upload-zone:hover::before, .upload-zone.drag-over::before { opacity: 1; }
+
+  .upload-icon {
+    width: 80px; height: 80px;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 2rem;
+    transition: all 0.3s;
+  }
+  .upload-zone:hover .upload-icon {
+    border-color: var(--cyan);
+    box-shadow: 0 0 20px rgba(0,229,255,0.2);
+    transform: translateY(-4px);
+  }
+
+  .upload-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem; font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .upload-sub { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
+
+  .upload-formats {
+    display: inline-flex; gap: 8px;
+  }
+  .format-tag {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  #fileInput { display: none; }
+
+  /* PREVIEW */
+  .preview-section {
+    display: none;
+    margin-bottom: 32px;
+    animation: fadeUp 0.5s ease both;
+  }
+  .preview-section.visible { display: block; }
+
+  .preview-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .preview-thumb {
+    width: 120px; height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    background: #0d0d0d;
+  }
+  .preview-info { flex: 1; }
+  .preview-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 1rem;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .preview-meta { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; }
+  .remove-btn {
+    background: rgba(255,77,109,0.1);
+    border: 1px solid rgba(255,77,109,0.3);
+    color: var(--danger);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+  .remove-btn:hover { background: rgba(255,77,109,0.2); }
+
+  /* OPTIONS */
+  .options-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.8s ease 0.25s both;
+  }
+  .options-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 0.95rem;
+    margin-bottom: 20px;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .option-check {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .option-check:hover { border-color: var(--cyan); background: rgba(0,229,255,0.04); }
+  .option-check input { display: none; }
+  .option-box {
+    width: 18px; height: 18px;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .option-check input:checked ~ .option-box {
+    background: var(--cyan);
+    border-color: var(--cyan);
+  }
+  .option-check input:checked ~ .option-box::after {
+    content: '✓';
+    color: #020a0f;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+  .option-label { font-size: 0.88rem; font-weight: 500; }
+
+  /* ANALYZE BUTTON */
+  .analyze-btn {
+    width: 100%;
+    background: var(--cyan);
+    color: var(--bg);
+    border: none;
+    padding: 20px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    animation: fadeUp 0.8s ease 0.35s both;
+    position: relative;
+    overflow: hidden;
+  }
+  .analyze-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .analyze-btn:hover:not(:disabled) {
+    box-shadow: 0 0 40px rgba(0,229,255,0.4), 0 8px 30px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+  }
+  .analyze-btn:hover::before { opacity: 1; }
+  .analyze-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* LOADING STATE */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0; z-index: 200;
+    background: rgba(2,10,15,0.92);
+    backdrop-filter: blur(10px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+  }
+  .loading-overlay.active { display: flex; }
+
+  .loader-ring {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,229,255,0.1);
+    border-top-color: var(--cyan);
+    animation: spin 1s linear infinite;
+    position: relative;
+  }
+  .loader-ring::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,255,213,0.1);
+    border-bottom-color: var(--teal);
+    animation: spin 1.5s linear infinite reverse;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loader-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem; font-weight: 700;
+    color: var(--text);
+    text-align: center;
+  }
+  .loader-sub {
+    color: var(--text-muted); font-size: 0.9rem; text-align: center;
+  }
+
+  .loader-steps {
+    display: flex; flex-direction: column; gap: 12px;
+    width: 300px;
+  }
+  .loader-step {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 0.88rem; color: var(--text-muted);
+    opacity: 0.3;
+    transition: opacity 0.5s;
+  }
+  .loader-step.active { opacity: 1; color: var(--text); }
+  .loader-step.done { opacity: 0.6; color: var(--teal); }
+  .step-icon { width: 20px; height: 20px; flex-shrink: 0; }
+
+  /* INFO BOX */
+  .info-box {
+    background: rgba(0,229,255,0.04);
+    border: 1px solid rgba(0,229,255,0.15);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex; gap: 12px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.8s ease 0.2s both;
+  }
+  .info-box strong { color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Radiant<span>AI</span></a>
+  <a href="/" class="back-btn">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back to Home
+  </a>
+</nav>
+
+<main>
+  <div class="page-header">
+    <div class="page-badge">
+      <span class="badge-dot"></span>
+      Agentic AI Analysis
+    </div>
+    <h1>Upload X-Ray</h1>
+    <p class="page-sub">Upload a chest X-ray image and our AI will analyze it for abnormalities.</p>
+  </div>
+
+  <div class="info-box">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;color:var(--cyan)"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span><strong>Privacy Note:</strong> Your X-ray image is processed in real-time and never stored on our servers. All analysis is performed by  AI .</span>
+  </div>
+
+  <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon">🩻</div>
+    <div class="upload-title">Drop your X-ray here</div>
+    <p class="upload-sub">or click to browse files from your device</p>
+    <div class="upload-formats">
+      <span class="format-tag">JPEG</span>
+      <span class="format-tag">PNG</span>
+      <span class="format-tag">DICOM</span>
+      <span class="format-tag">WEBP</span>
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+  </div>
+
+  <div class="preview-section" id="previewSection">
+    <div class="preview-card">
+      <img id="previewThumb" class="preview-thumb" src="" alt="X-ray preview">
+      <div class="preview-info">
+        <div class="preview-name" id="previewName">filename.jpg</div>
+        <div class="preview-meta" id="previewMeta">Loading...</div>
+        <button class="remove-btn" onclick="removeFile()">✕ Remove file</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="options-section">
+    <div class="options-title">Analysis Options</div>
+    <div class="options-grid">
+      <label class="option-check">
+        <input type="checkbox" id="opt1" checked>
+        <div class="option-box"></div>
+        <span class="option-label">Disease Detection</span>
+      </label>
+      <label class="option-check">
+        <input type="checkbox" id="opt2" checked>
+        <div class="option-box"></div>
+        <span class="option-label">Severity Assessment</span>
+      </label>
+      <label class="option-check">
+        <input type="checkbox" id="opt3" checked>
+        <div class="option-box"></div>
+        <span class="option-label">Differential Diagnosis</span>
+      </label>
+      <label class="option-check">
+        <input type="checkbox" id="opt4" checked>
+        <div class="option-box"></div>
+        <span class="option-label">Clinical Recommendations</span>
+      </label>
+    </div>
+  </div>
+
+  <button class="analyze-btn" id="analyzeBtn" disabled onclick="runAnalysis()">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/></svg>
+    Analyze X-Ray
+  </button>
+</main>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader-ring"></div>
+  <div>
+    <div class="loader-text">Analyzing your X-ray...</div>
+    <div class="loader-sub" style="margin-top:8px">Our AI is examining every region</div>
+  </div>
+  <div class="loader-steps">
+    <div class="loader-step active" id="step1">
+      <svg class="step-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      Loading image into AI vision
+    </div>
+    <div class="loader-step" id="step2">
+      <svg class="step-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      Scanning for abnormalities
+    </div>
+    <div class="loader-step" id="step3">
+      <svg class="step-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>
+      Generating diagnostic report
+    </div>
+    <div class="loader-step" id="step4">
+      <svg class="step-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      Finalizing results
+    </div>
+  </div>
+</div>
+
+<script>
+  let selectedFile = null;
+
+  const uploadZone = document.getElementById('uploadZone');
+  const fileInput = document.getElementById('fileInput');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+
+  // Drag & drop
+  uploadZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadZone.classList.add('drag-over');
+  });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) handleFile(file);
+  });
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById('previewThumb').src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    document.getElementById('previewName').textContent = file.name;
+    document.getElementById('previewMeta').textContent =
+      `${(file.size / 1024).toFixed(1)} KB · ${file.type}`;
+
+    document.getElementById('previewSection').classList.add('visible');
+    analyzeBtn.disabled = false;
+    uploadZone.style.display = 'none';
+  }
+
+  function removeFile() {
+    selectedFile = null;
+    fileInput.value = '';
+    document.getElementById('previewSection').classList.remove('visible');
+    analyzeBtn.disabled = true;
+    uploadZone.style.display = 'block';
+  }
+
+  async function runAnalysis() {
+    if (!selectedFile) return;
+
+    // Show loading
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('active');
+
+    // Animate steps
+    const steps = ['step1', 'step2', 'step3', 'step4'];
+    let i = 0;
+    const stepInterval = setInterval(() => {
+      if (i > 0) document.getElementById(steps[i - 1]).classList.replace('active', 'done');
+      if (i < steps.length) document.getElementById(steps[i]).classList.add('active');
+      i++;
+      if (i >= steps.length) clearInterval(stepInterval);
+    }, 1500);
+
+    // Build form data
+    const formData = new FormData();
+    formData.append('xray', selectedFile);
+
+    try {
+      const resp = await fetch('/api/analyze', { method: 'POST', body: formData });
+      const data = await resp.json();
+
+      clearInterval(stepInterval);
+
+      if (data.success) {
+        sessionStorage.setItem('xrayResult', JSON.stringify(data.result));
+        sessionStorage.setItem('xrayPreview', URL.createObjectURL(selectedFile));
+        window.location.href = '/results';
+      } else {
+        overlay.classList.remove('active');
+        alert('Analysis failed: ' + (data.error || 'Unknown error'));
+      }
+    } catch (err) {
+      clearInterval(stepInterval);
+      overlay.classList.remove('active');
+      alert('Error connecting to server: ' + err.message);
+    }
+  }
+</script>
+</body>
+</html>
