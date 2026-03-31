@@ -21,7 +21,6 @@
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   html { scroll-behavior: smooth; }
 
   body {
@@ -32,7 +31,12 @@
     cursor: none;
   }
 
-  /* Custom cursor */
+  /* Hide custom cursor on touch devices */
+  @media (hover: none) {
+    body { cursor: auto; }
+    .cursor, .cursor-ring { display: none; }
+  }
+
   .cursor {
     width: 12px; height: 12px;
     background: var(--cyan);
@@ -53,7 +57,6 @@
     transition: transform 0.25s ease, width 0.2s, height 0.2s;
   }
 
-  /* GRID BACKGROUND */
   body::before {
     content: '';
     position: fixed;
@@ -66,7 +69,6 @@
     z-index: 0;
   }
 
-  /* NOISE OVERLAY */
   body::after {
     content: '';
     position: fixed;
@@ -77,7 +79,7 @@
     z-index: 0;
   }
 
-  /* NAV */
+  /* ── NAV ── */
   nav {
     position: fixed;
     top: 0; left: 0; right: 0;
@@ -98,6 +100,7 @@
     color: var(--cyan);
     letter-spacing: -0.02em;
     text-decoration: none;
+    flex-shrink: 0;
   }
   .logo span { color: var(--text); }
 
@@ -105,6 +108,7 @@
     display: flex;
     gap: 40px;
     list-style: none;
+    align-items: center;
   }
   nav ul a {
     color: var(--text-muted);
@@ -114,6 +118,7 @@
     letter-spacing: 0.05em;
     text-transform: uppercase;
     transition: color 0.2s;
+    white-space: nowrap;
   }
   nav ul a:hover { color: var(--cyan); }
 
@@ -131,7 +136,59 @@
     color: var(--bg) !important;
   }
 
-  /* HERO */
+  /* Hamburger — hidden on desktop */
+  .nav-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 4px;
+    background: none;
+    border: none;
+  }
+  .nav-hamburger span {
+    display: block;
+    width: 24px; height: 2px;
+    background: var(--cyan);
+    border-radius: 2px;
+    transition: 0.3s;
+  }
+
+  /* Mobile nav drawer */
+  .nav-mobile {
+    display: none;
+    position: fixed;
+    top: 65px; left: 0; right: 0;
+    background: rgba(2,10,15,0.97);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    z-index: 99;
+    flex-direction: column;
+    padding: 24px;
+    gap: 20px;
+  }
+  .nav-mobile.open { display: flex; }
+  .nav-mobile a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-mobile a:last-child { border-bottom: none; }
+  .nav-mobile .nav-cta {
+    background: var(--cyan);
+    color: var(--bg) !important;
+    padding: 14px 24px;
+    border-radius: 4px;
+    text-align: center;
+    border-bottom: none !important;
+  }
+
+  /* ── HERO ── */
   .hero {
     position: relative;
     min-height: 100vh;
@@ -142,7 +199,6 @@
     overflow: hidden;
   }
 
-  /* Radial glow behind hero */
   .hero-glow {
     position: absolute;
     width: 700px; height: 700px;
@@ -161,6 +217,8 @@
   .hero-content {
     max-width: 700px;
     animation: fadeUp 1s ease both;
+    position: relative;
+    z-index: 2;
   }
 
   @keyframes fadeUp {
@@ -283,7 +341,7 @@
     background: rgba(0,229,255,0.05);
   }
 
-  /* HERO VISUAL - X-ray mockup */
+  /* Hero Visual */
   .hero-visual {
     position: absolute;
     right: -60px;
@@ -291,6 +349,7 @@
     transform: translateY(-50%);
     width: 520px;
     animation: fadeUp 1.2s ease 0.5s both, float 6s ease-in-out infinite;
+    z-index: 1;
   }
 
   @keyframes float {
@@ -318,7 +377,6 @@
     position: relative;
   }
 
-  /* SVG X-ray lungs */
   .lung-svg { width: 80%; opacity: 0.85; }
 
   .scan-line {
@@ -348,7 +406,6 @@
     letter-spacing: 0.05em;
     animation: tagPulse 2s ease-in-out infinite;
   }
-
   @keyframes tagPulse {
     0%, 100% { opacity: 1; box-shadow: 0 0 0 rgba(0,229,255,0); }
     50% { opacity: 0.8; box-shadow: 0 0 10px rgba(0,229,255,0.3); }
@@ -372,7 +429,7 @@
   .xray-conf { font-size: 0.82rem; color: var(--text-muted); }
   .xray-conf strong { color: var(--amber); }
 
-  /* STATS BAR */
+  /* ── STATS BAR ── */
   .stats-bar {
     position: relative;
     z-index: 1;
@@ -405,143 +462,23 @@
     text-transform: uppercase;
   }
 
-  /* FEATURES */
-  .features {
+  /* ── DISCLAIMER ── */
+  .disclaimer {
+    background: rgba(255,183,0,0.05);
+    border: 1px solid rgba(255,183,0,0.2);
+    border-radius: 8px;
+    padding: 16px 24px;
+    margin: 24px 60px;
+    font-size: 0.82rem;
+    color: rgba(255,183,0,0.8);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
     position: relative;
     z-index: 1;
-    padding: 100px 60px;
   }
 
-  .section-label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--cyan);
-    margin-bottom: 20px;
-  }
-
-  .section-title {
-    font-family: 'Clash Display', sans-serif;
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    margin-bottom: 60px;
-    max-width: 500px;
-  }
-
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    background: var(--border);
-  }
-
-  .feature-card {
-    background: var(--bg);
-    padding: 48px 40px;
-    transition: background 0.3s;
-    position: relative;
-    overflow: hidden;
-  }
-  .feature-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--cyan), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .feature-card:hover { background: var(--surface); }
-  .feature-card:hover::before { opacity: 1; }
-
-  .feature-icon {
-    width: 52px; height: 52px;
-    background: rgba(0,229,255,0.08);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 24px;
-    font-size: 1.4rem;
-    transition: box-shadow 0.3s;
-  }
-  .feature-card:hover .feature-icon {
-    box-shadow: 0 0 20px rgba(0,229,255,0.2);
-    border-color: var(--cyan);
-  }
-
-  .feature-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 12px;
-    color: var(--text);
-  }
-  .feature-desc {
-    font-size: 0.9rem;
-    line-height: 1.7;
-    color: var(--text-muted);
-  }
-
-  /* HOW IT WORKS */
-  .how {
-    position: relative;
-    z-index: 1;
-    padding: 100px 60px;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .steps {
-    display: flex;
-    gap: 0;
-    margin-top: 60px;
-    position: relative;
-  }
-  .steps::before {
-    content: '';
-    position: absolute;
-    top: 32px; left: 40px; right: 40px;
-    height: 1px;
-    background: linear-gradient(90deg, var(--cyan), var(--teal), var(--cyan));
-    opacity: 0.2;
-  }
-
-  .step {
-    flex: 1;
-    padding: 0 40px;
-    text-align: center;
-  }
-  .step-num {
-    width: 64px; height: 64px;
-    background: var(--bg);
-    border: 1px solid var(--cyan);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Clash Display', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--cyan);
-    margin: 0 auto 24px;
-    box-shadow: 0 0 20px rgba(0,229,255,0.1);
-    transition: box-shadow 0.3s;
-  }
-  .step:hover .step-num { box-shadow: 0 0 30px rgba(0,229,255,0.3); }
-  .step-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-  }
-  .step-desc { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
-
-  /* CTA SECTION */
+  /* ── CTA SECTION ── */
   .cta-section {
     position: relative;
     z-index: 1;
@@ -572,7 +509,7 @@
   }
   .cta-section .btn-primary { font-size: 1.1rem; padding: 18px 48px; }
 
-  /* FOOTER */
+  /* ── FOOTER ── */
   footer {
     position: relative;
     z-index: 1;
@@ -587,20 +524,121 @@
   footer a { color: var(--text-muted); text-decoration: none; }
   footer a:hover { color: var(--cyan); }
 
-  /* DISCLAIMER */
-  .disclaimer {
-    background: rgba(255,183,0,0.05);
-    border: 1px solid rgba(255,183,0,0.2);
-    border-radius: 8px;
-    padding: 16px 24px;
-    margin: 0 60px;
-    font-size: 0.82rem;
-    color: rgba(255,183,0,0.8);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    position: relative;
-    z-index: 1;
+  /* ════════════════════════════════
+     MOBILE RESPONSIVE — ≤768px
+  ════════════════════════════════ */
+  @media (max-width: 768px) {
+
+    /* Nav */
+    nav {
+      padding: 16px 20px;
+    }
+    nav ul { display: none; }
+    .nav-hamburger { display: flex; }
+
+    /* Hero — stack vertically */
+    .hero {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 100px 20px 60px;
+      min-height: auto;
+      gap: 48px;
+    }
+
+    .hero-glow {
+      width: 300px; height: 300px;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 10vw, 3.5rem);
+    }
+
+    .hero-desc {
+      font-size: 1rem;
+      margin-bottom: 32px;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+    .hero-actions a {
+      width: 100%;
+      justify-content: center;
+    }
+
+    /* Hero visual — show below content, full width */
+    .hero-visual {
+      position: relative;
+      right: auto;
+      top: auto;
+      transform: none;
+      width: 100%;
+      animation: fadeUp 1.2s ease 0.5s both;
+    }
+
+    /* Stats bar — 2x2 grid */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .stat-item {
+      padding: 28px 20px;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat-item:nth-child(2) { border-right: none; }
+    .stat-item:nth-child(3) { border-bottom: none; }
+    .stat-item:nth-child(4) { border-right: none; border-bottom: none; }
+    .stat-num { font-size: 2.2rem; }
+
+    /* Disclaimer */
+    .disclaimer {
+      margin: 16px 20px;
+      flex-direction: row;
+      align-items: flex-start;
+      font-size: 0.8rem;
+    }
+
+    /* CTA */
+    .cta-section {
+      padding: 60px 20px;
+    }
+    .cta-section .btn-primary {
+      width: 100%;
+      justify-content: center;
+      font-size: 1rem;
+      padding: 16px 24px;
+    }
+
+    /* Footer */
+    footer {
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+      padding: 32px 20px;
+    }
+  }
+
+  /* Tablet — 769px to 1024px */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    nav { padding: 20px 32px; }
+    nav ul { gap: 24px; }
+
+    .hero {
+      padding: 120px 32px 80px;
+    }
+    .hero-visual {
+      width: 380px;
+      right: -20px;
+    }
+
+    .stat-item { padding: 32px 28px; }
+    .stat-num { font-size: 2.4rem; }
+
+    .disclaimer { margin: 16px 32px; }
+    .cta-section { padding: 80px 32px; }
+    footer { padding: 40px 32px; }
   }
 </style>
 </head>
@@ -616,19 +654,28 @@
     <li><a href="{{ url_for('Howitworks') }}">How it works</a></li>
     <li><a href="/analyze" class="nav-cta">Analyze X-Ray →</a></li>
   </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- Mobile nav drawer -->
+<div class="nav-mobile" id="mobileNav">
+  <a href="{{ url_for('features') }}">Features</a>
+  <a href="{{ url_for('Howitworks') }}">How it works</a>
+  <a href="/analyze" class="nav-cta">Analyze X-Ray →</a>
+</div>
 
 <section class="hero">
   <div class="hero-glow"></div>
   <div class="hero-content">
     <div class="hero-badge">
       <span class="badge-dot"></span>
-       Agentic Analysis
+      Agentic Analysis
     </div>
     <h1>
       X-Ray<br>
-      <span class=Agentic AI></span><br>
-      
+      <span class="accent">Intelligence</span>
     </h1>
     <p class="hero-desc">
       Upload any chest X-ray and receive a comprehensive AI-powered diagnostic analysis in seconds. Detect abnormalities, assess severity, and get actionable clinical recommendations.
@@ -648,13 +695,9 @@
     <div class="xray-frame">
       <div class="xray-screen">
         <div class="scan-line"></div>
-        <!-- SVG Chest X-ray illustration -->
         <svg class="lung-svg" viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Ribcage -->
           <path d="M100 20 L100 200" stroke="#2a4a5a" stroke-width="3"/>
-          <!-- Spine -->
           <rect x="96" y="18" width="8" height="185" rx="2" fill="#1e3a48"/>
-          <!-- Ribs left -->
           <path d="M96 40 Q60 44 40 55" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M96 55 Q58 58 36 70" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M96 70 Q55 73 33 86" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
@@ -662,7 +705,6 @@
           <path d="M96 100 Q55 104 34 118" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M96 115 Q57 120 37 135" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M96 130 Q60 136 42 150" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
-          <!-- Ribs right -->
           <path d="M104 40 Q140 44 160 55" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M104 55 Q142 58 164 70" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M104 70 Q145 73 167 86" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
@@ -670,19 +712,13 @@
           <path d="M104 100 Q145 104 166 118" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M104 115 Q143 120 163 135" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
           <path d="M104 130 Q140 136 158 150" stroke="#2a5068" stroke-width="1.5" stroke-linecap="round"/>
-          <!-- Left lung -->
           <path d="M96 35 Q70 38 52 55 Q30 80 32 130 Q34 160 60 170 Q80 175 96 165 Z" fill="#0d2535" stroke="#1e5a78" stroke-width="1"/>
-          <!-- Right lung -->
           <path d="M104 35 Q130 38 148 55 Q170 80 168 130 Q166 160 140 170 Q120 175 104 165 Z" fill="#0d2535" stroke="#1e5a78" stroke-width="1"/>
-          <!-- Heart shadow -->
           <ellipse cx="88" cy="130" rx="18" ry="22" fill="#091820" stroke="#163248" stroke-width="1"/>
-          <!-- Abnormality highlight -->
           <circle cx="58" cy="88" r="12" fill="rgba(0,229,255,0.08)" stroke="rgba(0,229,255,0.4)" stroke-width="1.5" stroke-dasharray="3 2"/>
-          <!-- Clavicles -->
           <path d="M96 22 Q75 18 52 25" stroke="#2e6080" stroke-width="2" stroke-linecap="round"/>
           <path d="M104 22 Q125 18 148 25" stroke="#2e6080" stroke-width="2" stroke-linecap="round"/>
         </svg>
-
         <div class="xray-tag tag-1">Finding 01</div>
         <div class="xray-tag tag-2">Analyzing...</div>
         <div class="xray-tag tag-3">ROI Detected</div>
@@ -741,7 +777,7 @@
 </footer>
 
 <script>
-  // Custom cursor
+  // Custom cursor (desktop only)
   const cursor = document.getElementById('cursor');
   const ring = document.getElementById('cursorRing');
   let mx = 0, my = 0, rx = 0, ry = 0;
@@ -774,7 +810,18 @@
     });
   });
 
-  // Intersection observer for stat animations
+  // Hamburger menu toggle
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  hamburger.addEventListener('click', () => {
+    mobileNav.classList.toggle('open');
+  });
+  // Close when a link is tapped
+  mobileNav.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => mobileNav.classList.remove('open'));
+  });
+
+  // Intersection observer for animations
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) e.target.style.opacity = '1'; });
   }, { threshold: 0.1 });
