@@ -3,16 +3,18 @@ import json
 import re
 import os
 import google.generativeai as genai
-from google.genai import types
 from PIL import Image
 import io
  
 app = Flask(__name__)
  
-# Gemini config - Free tier available at https://aistudio.google.com/app/apikey
-GEMINI_API_KEY = os.environ.get("AIzaSyCMd1BGqcCR-nGXPjFHwm3Jux_ZDaPtsjE")
-client = genai.Client(api_key=GEMINI_API_KEY)
-GEMINI_MODEL = "gemini-2.0-flash"  # Fast + free tier
+
+
+GEMINI_API_KEY = os.environ.get("AIzaSyAIbNct1rwi-9EPZuukLBUsi1HzyWU-oDc")
+
+genai.configure(api_key=GEMINI_API_KEY)
+
+model = genai.GenerativeModel("gemini-2.0-flash")
  
  
 @app.route('/')
