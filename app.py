@@ -8,12 +8,12 @@ import io
 
 app = Flask(__name__)
 
-GEMINI_API_KEY = os.environ.get("AIzaSyAIbNct1rwi-9EPZuukLBUsi1HzyWU-oDc")  # FIX 1: use env var name, not the key value
-GEMINI_MODEL = "gemini-2.0-flash"                   # FIX 2: define the model name constant
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")  
+GEMINI_MODEL = "gemini-2.0-flash"                   
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-model = genai.GenerativeModel(GEMINI_MODEL)         # FIX 3: use the constant here too
+model = genai.GenerativeModel(GEMINI_MODEL)         
 
 
 @app.route('/')
