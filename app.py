@@ -27,6 +27,7 @@ def get_groq_client():
     return None
 
 
+
 @app.route('/')
 def index():
     """Render the landing page."""
