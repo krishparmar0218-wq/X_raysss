@@ -1,44 +1,65 @@
-from flask import Flask, render_template, request, jsonify
-import json
-import re
-import os
-import google.generativeai as genai
-from PIL import Image
+import base64
 import io
+import json
+import os
+import re
+
+from flask import Flask, jsonify, render_template, request
+from groq import Groq
+from PIL import Image
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 
-GEMINI_API_KEY = os.environ.get("AIzaSyAIbNct1rwi-9EPZuukLBUsi1HzyWU-oDc")  # FIX 1: use env var name, not the key value
-GEMINI_MODEL = "gemini-2.0-flash"                   # FIX 2: define the model name constant
+# API Configuration
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
-genai.configure(api_key=GEMINI_API_KEY)
-
-model = genai.GenerativeModel(GEMINI_MODEL)         # FIX 3: use the constant here too
+# Initialize Groq Client
+def get_groq_client():
+    """Dynamically get or initialize the Groq client."""
+    api_key = os.environ.get("GROQ_API_KEY")
+    if api_key:
+        return Groq(api_key=api_key)
+    return None
 
 
 @app.route('/')
 def index():
+    """Render the landing page."""
     return render_template('index.html')
+
 
 @app.route('/features')
 def features():
+    """Render the features page."""
     return render_template('features.html')
 
+
 @app.route('/Howitworks')
-def Howitworks():
+def how_it_works():
+    """Render the how it works page."""
     return render_template('Howitworks.html')
+
 
 @app.route('/analyze')
 def analyze():
+    """Render the analyze page."""
     return render_template('analyze.html')
+
 
 @app.route('/results')
 def results():
+    """Render the results page."""
     return render_template('results.html')
 
 
 @app.route('/api/analyze', methods=['POST'])
 def api_analyze():
+    """Handle X-ray image analysis request using Groq's Vision API."""
     if 'xray' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
 
@@ -46,57 +67,70 @@ def api_analyze():
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
 
-    # Read image bytes
-    image_data = file.read()
-    image = Image.open(io.BytesIO(image_data))
-
-    # Convert to RGB if needed (handles PNG with alpha channel)
-    if image.mode in ('RGBA', 'P'):
-        image = image.convert('RGB')
-
-    # Save to bytes buffer as JPEG for the API
-    buf = io.BytesIO()
-    image.save(buf, format='JPEG')
-    buf.seek(0)
-    image_bytes = buf.getvalue()
-
-    prompt = """You are an expert radiologist AI assistant. Analyze this X-ray image thoroughly and provide a detailed diagnostic report.
-
-Provide your response ONLY as a valid JSON object with no extra text, no markdown, no explanation outside the JSON.
-
-Use exactly this structure:
-{
-  "overall_status": "Normal or Abnormal or Requires Attention",
-  "confidence": 85,
-  "findings": [
-    {
-      "name": "Finding name",
-      "region": "Anatomical region",
-      "severity": "Normal or Mild or Moderate or Severe",
-      "confidence": 80,
-      "description": "Detailed description of the finding"
-    }
-  ],
-  "differential_diagnosis": ["Condition 1", "Condition 2", "Condition 3"],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "summary": "Overall summary paragraph of findings",
-  "image_quality": "Good or Fair or Poor"
-}
-
-Be thorough. Identify any abnormalities, opacities, consolidations, pleural effusions, cardiomegaly, pneumothorax, fractures, or other findings. If the image appears normal, state that clearly."""
-
     try:
-        # FIX 4: use model.generate_content() directly (not client.models.generate_content)
-        import PIL.Image as PILImage
-        pil_image = PILImage.open(io.BytesIO(image_bytes))
+        client = get_groq_client()
+        if not client:
+            return jsonify({'error': 'Groq API key not set. Please set the GROQ_API_KEY environment variable.'}), 500
 
-        response = model.generate_content([prompt, pil_image])
+        # Read image bytes and convert to RGB/JPEG for processing
+        image_data = file.read()
+        image = Image.open(io.BytesIO(image_data))
 
-        response_text = response.text
+        if image.mode in ('RGBA', 'P'):
+            image = image.convert('RGB')
 
-        # Strip markdown code fences if present
-        response_text = re.sub(r'```json|```', '', response_text).strip()
+        buf = io.BytesIO()
+        image.save(buf, format='JPEG', quality=85)
+        buf.seek(0)
+        image_bytes = buf.getvalue()
 
+        # Base64 encode for Groq API
+        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+
+        prompt = """You are an expert radiologist AI assistant. Analyze this X-ray image thoroughly.
+        Provide your response ONLY as a valid JSON object with no extra text.
+
+        Use exactly this structure:
+        {
+          "overall_status": "Normal or Abnormal or Requires Attention",
+          "confidence": 85,
+          "findings": [
+            {
+              "name": "Finding name",
+              "region": "Anatomical region",
+              "severity": "Normal or Mild or Moderate or Severe",
+              "confidence": 80,
+              "description": "Detailed description of the finding"
+            }
+          ],
+          "differential_diagnosis": ["Condition 1", "Condition 2"],
+          "recommendations": ["Recommendation 1"],
+          "summary": "Overall summary paragraph",
+          "image_quality": "Good or Fair or Poor"
+        }"""
+
+        completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            },
+                        },
+                    ],
+                }
+            ],
+            model=GROQ_MODEL,
+            response_format={"type": "json_object"}
+        )
+
+        response_text = completion.choices[0].message.content
+
+        # Robust JSON extraction
         json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
         if json_match:
             try:
@@ -110,14 +144,13 @@ Be thorough. Identify any abnormalities, opacities, consolidations, pleural effu
 
     except Exception as e:
         error_msg = str(e)
-        if "API_KEY" in error_msg or "invalid" in error_msg.lower():
-            return jsonify({'error': 'Invalid or missing Gemini API key. Get one free at https://aistudio.google.com/app/apikey'}), 500
-        if "quota" in error_msg.lower():
-            return jsonify({'error': 'Gemini free tier quota exceeded. Try again later.'}), 500
+        if "API_KEY" in error_msg or "401" in error_msg:
+            return jsonify({'error': 'Invalid or missing Groq API key. Get one at https://console.groq.com/'}), 500
         return jsonify({'error': error_msg}), 500
 
 
 def build_fallback_result(text):
+    """Fallback mechanism for non-JSON responses."""
     return {
         "overall_status": "Analysis Complete",
         "confidence": 75,
@@ -131,10 +164,7 @@ def build_fallback_result(text):
             }
         ],
         "differential_diagnosis": [],
-        "recommendations": [
-            "Consult with a qualified radiologist for clinical interpretation",
-            "Correlate findings with patient history and symptoms"
-        ],
+        "recommendations": ["Consult with a qualified radiologist for clinical interpretation"],
         "summary": text if text else "Analysis completed successfully.",
         "image_quality": "Good"
     }
@@ -142,17 +172,18 @@ def build_fallback_result(text):
 
 @app.route('/api/status', methods=['GET'])
 def check_status():
-    if not GEMINI_API_KEY:
-        return jsonify({'running': False, 'message': 'API key not set. Add your Gemini API key.'})
-    return jsonify({'running': True, 'model': GEMINI_MODEL, 'message': 'Gemini API ready'})
+    """Check the status of the Groq API connection."""
+    client = get_groq_client()
+    if not client:
+        return jsonify({'running': False, 'message': 'API key not set. Add your Groq API key.'})
+    return jsonify({'running': True, 'model': GROQ_MODEL, 'message': 'Groq API ready'})
 
 
 if __name__ == '__main__':
     print("=" * 50)
-    print("  RadiantAI — X-Ray Analysis (Gemini Mode)")
+    print("  RadiantAI — X-Ray Analysis (Groq Mode)")
     print("=" * 50)
-    print("  Get free API key: https://aistudio.google.com/app/apikey")
-    print("  Set it via:  set GEMINI_API_KEY=your_key_here")
+    print("  Set it via: set GROQ_API_KEY=your_key_here")
     print("  Open browser at: http://localhost:5000")
     print("=" * 50)
     app.run(debug=True, port=5000)

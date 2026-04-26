@@ -1,4 +1,5 @@
 flask
 gunicorn
-google-generativeai
+groq
 Pillow
+python-dotenv
